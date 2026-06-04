@@ -4,21 +4,11 @@ import { useCompare } from './CompareContext'
 import { Navigation } from '../../sections/Navigation'
 import { Footer, viewsonicFooterColumns } from '../../sections/Footer'
 import { ProductCard } from '../../sections/ProductCard'
-import { CategoryTileRow } from '../../sections/CategoryTile'
 import { FilterSidebar } from '../../sections/FilterAccordion'
 import type { FilterGroup } from '../../sections/FilterAccordion'
 import { CompareBar } from './CompareBar'
 import { MOCK_PRODUCTS } from './mockData'
 import type { Product } from './mockData'
-
-const CATEGORIES = [
-  { id: 'gaming', label: 'Gaming', image: 'https://www.viewsonic.com/vsAssetFile/global/img/resize/lcd/filter-series/series-gaming.webp' },
-  { id: 'colorpro', label: 'ColorPro', image: 'https://www.viewsonic.com/vsAssetFile/global/img/resize/lcd/filter-series/series-colorpro.webp' },
-  { id: 'workpro', label: 'WorkPro', image: 'https://www.viewsonic.com/vsAssetFile/global/img/resize/lcd/filter-series/series-workpro.webp' },
-  { id: 'touch', label: 'Touch Series', image: 'https://www.viewsonic.com/vsAssetFile/global/img/resize/lcd/filter-series/series-touch.webp' },
-  { id: 'portable', label: 'Portable Series', image: 'https://www.viewsonic.com/vsAssetFile/global/img/resize/lcd/filter-series/series-portable.webp' },
-  { id: 'entertainment', label: 'Entertainment Series', image: 'https://www.viewsonic.com/vsAssetFile/global/img/resize/lcd/filter-series/series-entertainment.webp' },
-]
 
 const FILTER_GROUPS: FilterGroup[] = [
   {
@@ -105,7 +95,7 @@ export function ProductListingPage() {
       </div>*/}
 
       {/* Category Tiles */}
-      <div data-section="category-tiles" className="w-full py-6 border-b border-[#e9e9e9]">
+      {/* <div data-section="category-tiles" className="w-full py-6 border-b border-[#e9e9e9]">
         <CategoryTileRow
           categories={CATEGORIES}
           activeId={activeCategory}
@@ -153,7 +143,7 @@ export function ProductListingPage() {
 
           <div className="flex gap-6">
             {/* Desktop Filter Sidebar — 只在桌機版顯示 */}
-            <div className="hidden md:block">
+            <div className="hidden md:block"> 
               <FilterSidebar
                 filters={FILTER_GROUPS}
                 selectedFilters={selectedFilters}
@@ -201,7 +191,7 @@ export function ProductListingPage() {
         products={compareList}
         onRemove={removeFromCompare}
         onClear={() => setCompareList([])}
-        onCompare={() => navigate('/compare')}
+        onCompare={() => navigate(`/compare?ids=${compareList.map(p => p.id).join(',')}`)}
         showFullToast={showFullToast}
         onCloseFullToast={() => setShowFullToast(false)}
       />

@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useCompare } from './CompareContext'
 import { cn } from '../../lib/utils'
 import { Navigation } from '../../sections/Navigation'
 import { Button } from '../../components/Button'
 import { Footer, viewsonicFooterColumns } from '../../sections/Footer'
-import { type Product } from './mockData'
+import { type Product, MOCK_PRODUCTS } from './mockData'
 
 export interface SpecGroup {
   title: string
@@ -141,8 +141,21 @@ function SpecGroupSection({ group, products, showDiffOnly, maxSlots, isMobile }:
 // ─────────────────────────────────────────────
 export function ComparePage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { compareList, setCompareList } = useCompare()
-  const [products, setProducts] = useState<Product[]>(compareList)
+
+  // Initialise from URL first, fall back to in-memory compareList
+  const initProducts = (): Product[] => {
+    const ids = searchParams.get('ids')
+    if (ids) {
+      const idList = ids.split(',').filter(Boolean)
+      const fromUrl = idList.map(id => MOCK_PRODUCTS.find(p => p.id === id)).filter(Boolean) as Product[]
+      if (fromUrl.length > 0) return fromUrl
+    }
+    return compareList
+  }
+
+  const [products, setProducts] = useState<Product[]>(initProducts)
   const [showDiffOnly, setShowDiffOnly] = useState(true)
   const [showPrintConfirm, setShowPrintConfirm] = useState(false)
   const [tooltipVisible, setTooltipVisible] = useState(false)
@@ -152,6 +165,11 @@ export function ComparePage() {
   const cardScrollRef = useRef<HTMLDivElement>(null)
   const tableScrollRef = useRef<HTMLDivElement>(null)
   const isSyncing = useRef(false)
+
+  // Scroll to top when the page first mounts
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50)
@@ -187,6 +205,12 @@ export function ComparePage() {
     const updated = products.filter(p => p.id !== id)
     setProducts(updated)
     setCompareList(updated)
+    // Keep URL in sync so refresh reflects the current selection
+    if (updated.length > 0) {
+      setSearchParams({ ids: updated.map(p => p.id).join(',') })
+    } else {
+      setSearchParams({})
+    }
   }
 
   const addProduct = () => navigate('/')
@@ -206,18 +230,17 @@ export function ComparePage() {
 
         {/* Page Header + Controls */}
         <div className="mx-auto max-w-[1170px] px-4 md:px-6 py-6 md:py-10">
-          <div className="flex flex-col items-center gap-2 mb-6 md:mb-8">
-            {(
-              <button
-                onClick={() => navigate('/')}
-                className="flex items-center gap-1 text-[13px] text-[#767676] hover:text-brand-red transition-colors mb-2 md:mb-4"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-                  <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Back to Products
-              </button>
-            )}
+          <div className="flex flex-col gap-2 mb-6 md:mb-8">
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-1 text-[13px] text-[#767676] hover:text-brand-red transition-colors self-start mb-2 md:mb-4"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Previous Page
+            </button>
+            <div className="flex flex-col items-center gap-2">
             <h1 className="text-[24px] md:text-[32px] font-bold text-[#2a2a2a]">Compare Products</h1>
             <a href="#" className="text-[13px] text-[#2a2a2a] underline underline-offset-2 hover:text-brand-red flex items-center gap-1">
               Contact Sales
@@ -225,12 +248,13 @@ export function ComparePage() {
                 <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </a>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2 mb-4">
 
-            {/* Row 1: Toggle + Divider + Print button — fixed height, never shifts */}
-            <div className="flex items-center gap-4">
+            {/* Row 1: Toggle on left, Print button on right */}
+            <div className="flex items-center justify-between gap-4">
 
               {/* Toggle + Tooltip */}
               <div className="flex items-center gap-2">
@@ -279,11 +303,33 @@ export function ComparePage() {
                 </div>
               </div>
 
-              {/* Divider */}
-              <div className="hidden md:block h-4 w-px bg-[#e9e9e9]" />
-
-              {/* Print button — size never changes */}
-              <div className="hidden md:block">
+              {/* Download CSV + Print buttons — right side */}
+              <div className="hidden md:flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  leftIcon={
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+                      <path d="M7 2v7M4 6l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2 11h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  }
+                  onClick={() => {
+                    const headers = ['Spec', ...products.map(p => p.name)]
+                    const rows = SPEC_GROUPS.flatMap(g =>
+                      g.specs.map(spec => [spec, ...products.map(p => p.specs[spec] ?? '—')])
+                    )
+                    const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
+                    const blob = new Blob([csv], { type: 'text/csv' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = 'compare-products.csv'
+                    a.click()
+                    URL.revokeObjectURL(url)
+                  }}
+                >
+                  Download CSV
+                </Button>
                 <Button
                   variant="secondary"
                   leftIcon={

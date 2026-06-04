@@ -57,20 +57,9 @@ export function CompareBar({
       {/* ── Desktop layout ── */}
       <div className="hidden md:block">
         <div className="mx-auto max-w-[1170px] px-6 py-3 flex items-center gap-4">
-          <button
-            onClick={() => setExpanded(o => !o)}
-            className="flex items-center gap-2 flex-shrink-0"
-          >
-            <span className="text-[13px] font-bold text-[#2a2a2a] whitespace-nowrap">
-              Compare Products ({products.length}/{maxProducts})
-            </span>
-            <svg
-              width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden
-              className={cn('transition-transform duration-200', expanded ? 'rotate-0' : 'rotate-180')}
-            >
-              <path d="M4 10l4-4 4 4" stroke="#2a2a2a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+          <span className="text-[13px] font-bold text-[#2a2a2a] whitespace-nowrap flex-shrink-0">
+            Compare Products ({products.length}/{maxProducts})
+          </span>
 
           {expanded && (
             <>
@@ -112,6 +101,18 @@ export function CompareBar({
               </div>
             </>
           )}
+          <button
+            onClick={() => setExpanded(o => !o)}
+            aria-label={expanded ? 'Collapse compare bar' : 'Expand compare bar'}
+            className="flex-shrink-0 ml-auto flex items-center justify-center"
+          >
+            <svg
+              width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden
+              className={cn('transition-transform duration-200', expanded ? 'rotate-180' : 'rotate-0')}
+            >
+              <path d="M4 10l4-4 4 4" stroke="#2a2a2a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -127,7 +128,7 @@ export function CompareBar({
           </span>
           <svg
             width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden
-            className={cn('transition-transform duration-200', expanded ? 'rotate-180' : 'rotate-0')}
+            className={cn('transition-transform duration-200', expanded ? 'rotate-0' : 'rotate-180')}
           >
             <path d="M5 7.5l5 5 5-5" stroke="#2a2a2a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
